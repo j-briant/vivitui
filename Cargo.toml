@@ -1,0 +1,12 @@
+[package]
+name = "vivitui"
+version = "0.1.0"
+edition = "2021"
+include = ["**/*.rs", "Cargo.toml"]
+
+[dependencies]
+crossterm = "0.27.0"
+gdal = "0.16.0"
+gdal-sys = { version = "0.9.1", features = ["bindgen"] }
+lazy_static = "1.4.0"
+ratatui = "0.26.3"
