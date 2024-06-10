@@ -9,7 +9,7 @@ use ratatui::{
 };
 use std::io;
 use std::path::PathBuf;
-use vivitui::{data, extent, layer_list, srs, tui};
+use vivitui::{data, extent, layer_list, position_map, srs, tui};
 
 #[derive(Debug)]
 pub struct App {
@@ -71,6 +71,16 @@ impl App {
         extent.render(area, buf)
     }
 
+    fn render_position_map(&self, area: Rect, buf: &mut Buffer) {
+        let position_map = position_map::PositionMap::new(
+            &self
+                .dataset
+                .layer(self.layer_list.state.selected().unwrap_or(0) as isize)
+                .unwrap(),
+        );
+        position_map.render(area, buf)
+    }
+
     fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             // it's important to check that the event is a key press event as
@@ -115,23 +125,25 @@ impl Widget for &mut App {
         )
         .split(main_layout[1]);
 
-        let map = Canvas::default()
-            .block(Block::bordered().title("Canvas".bold().yellow()))
-            .x_bounds([-180.0, 180.0])
-            .y_bounds([-90.0, 90.0])
-            .paint(|ctx| {
-                ctx.draw(&Map {
-                    resolution: MapResolution::High,
-                    color: Color::White,
-                });
-            })
-            .marker(Marker::Dot);
+        /* let map = Canvas::default()
+        .block(Block::bordered().title("Canvas".bold().yellow()))
+        .x_bounds([-180.0, 180.0])
+        .y_bounds([-90.0, 90.0])
+        .paint(|ctx| {
+            ctx.draw(&Map {
+                resolution: MapResolution::High,
+                color: Color::White,
+            });
+        })
+        .marker(Marker::Dot);
 
         map.render(main_layout[2], buf);
+        */
 
         self.render_list(main_layout[0], buf);
         self.render_srs(inner_layout[0], buf);
         self.render_extent(inner_layout[1], buf);
+        self.render_position_map(main_layout[2], buf);
     }
 }
 
