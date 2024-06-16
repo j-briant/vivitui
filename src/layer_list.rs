@@ -1,25 +1,23 @@
-use gdal::vector::LayerAccess;
 use gdal::Dataset;
 use ratatui::prelude::*;
 use ratatui::style::palette::tailwind;
-use ratatui::{
-    symbols::border,
-    widgets::{block::*, *},
-};
+use ratatui::widgets::{block::*, *};
+
+use crate::data::LayerInfo;
 
 const SELECTED_STYLE_FG: Color = tailwind::BLUE.c300;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct LayerList {
-    pub items: Vec<String>,
+    pub items: Vec<LayerInfo>,
     pub state: ListState,
 }
 
 impl LayerList {
     pub fn new(dataset: &Dataset) -> Self {
-        let layers: Vec<String> = dataset.layers().map(|l| l.name()).collect();
+        let layer_info: Vec<LayerInfo> = LayerInfo::from_dataset(dataset);
         LayerList {
-            items: layers,
+            items: layer_info,
             state: ListState::default().with_selected(Some(0)),
         }
     }
@@ -61,30 +59,23 @@ impl StatefulWidget for LayerList {
     where
         Self: Sized,
     {
-        //let title = Title::from(" Layer list ".bold().yellow());
-        let instructions = Title::from(Line::from(vec!["<Top>".into(), "<Down>".into()]));
-        let block = Block::default()
-            .title(" Layer list ".bold().yellow())
-            .title_alignment(Alignment::Center)
-            .title(
-                instructions
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
-            .borders(Borders::ALL)
-            .border_set(border::PLAIN);
+        let block = Block::default().title(" Layer list ".bold().yellow());
 
         StatefulWidget::render(
-            List::new(self.items)
-                .block(block)
-                .highlight_symbol(">> ")
-                .highlight_style(
-                    Style::default()
-                        .add_modifier(Modifier::BOLD)
-                        .add_modifier(Modifier::REVERSED)
-                        .fg(SELECTED_STYLE_FG),
-                )
-                .direction(ListDirection::TopToBottom),
+            List::new(
+                self.items
+                    .into_iter()
+                    .map(|li| li.name)
+                    .collect::<Vec<String>>(),
+            )
+            .block(block)
+            .highlight_symbol(">> ")
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(Modifier::REVERSED)
+                    .fg(SELECTED_STYLE_FG),
+            ),
             area,
             buf,
             state,

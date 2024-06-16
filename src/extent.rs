@@ -1,58 +1,41 @@
-use gdal::vector::{Layer, LayerAccess};
 use ratatui::prelude::*;
-use ratatui::symbols::border;
-use ratatui::widgets::{block::*, Borders, Paragraph, Tabs, Widget};
+use ratatui::widgets::{block::*, Paragraph, Widget};
+
+use crate::data::Extent;
 
 #[derive(Debug, Default)]
-pub struct Extent {
-    xmin: f64,
-    ymin: f64,
-    xmax: f64,
-    ymax: f64,
-}
+pub struct ExtentUi(Extent);
 
-impl Extent {
-    pub fn new(layer: &Layer) -> Self {
-        let extent = layer.get_extent();
-        match extent {
-            Ok(ext) => Self {
-                xmin: ext.MinX,
-                ymin: ext.MinY,
-                xmax: ext.MaxX,
-                ymax: ext.MaxY,
-            },
-            Err(_) => Self::default(),
-        }
+impl ExtentUi {
+    pub fn new(extent: Extent) -> Self {
+        Self(extent)
     }
 }
 
-impl Widget for Extent {
+impl Widget for ExtentUi {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
         Self: Sized,
     {
         //let title = Title::from(" Spatial reference ".bold().yellow());
-        let block = Block::default()
-            .title(" Extent ".bold().yellow())
-            .title_alignment(Alignment::Center)
-            .borders(Borders::ALL)
-            .border_set(border::PLAIN);
+        let block = Block::default().title(" Extent ".bold().yellow());
+
         let text = Text::from(vec![
             Line::from(vec![
                 Span::from("Xmin: ").bold().yellow(),
-                Span::from(self.xmin.to_string()),
+                Span::from(self.0.xmin.to_string()),
             ]),
             Line::from(vec![
                 Span::from("Ymin: ").bold().yellow(),
-                Span::from(self.ymin.to_string()),
+                Span::from(self.0.ymin.to_string()),
             ]),
             Line::from(vec![
                 Span::from("Xmax: ").bold().yellow(),
-                Span::from(self.xmax.to_string()),
+                Span::from(self.0.xmax.to_string()),
             ]),
             Line::from(vec![
                 Span::from("Ymax: ").bold().yellow(),
-                Span::from(self.ymax.to_string()),
+                Span::from(self.0.ymax.to_string()),
             ]),
         ]);
         let para = Paragraph::new(text);

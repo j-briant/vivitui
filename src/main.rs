@@ -1,29 +1,26 @@
-use canvas::{Canvas, Map};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use gdal::Dataset;
 use layer_list::LayerList;
-use ratatui::widgets::canvas::MapResolution;
-use ratatui::{
-    prelude::*,
-    widgets::{block::*, *},
-};
+use ratatui::prelude::*;
 use std::io;
 use std::path::PathBuf;
-use vivitui::{data, extent, layer_list, position_map, srs, tui};
+use vivitui::data::LayerInfo;
+use vivitui::{data, extent::ExtentUi, layer_list, position_map::PositionMapUi, srs::SrsUi, tui};
 
 #[derive(Debug)]
 pub struct App {
     layer_list: LayerList,
-    dataset: Dataset,
+    layer_info: Vec<LayerInfo>,
     exit: bool,
 }
 
 impl App {
     pub fn new(dataset: Dataset) -> Self {
+        let layer_info = LayerInfo::from_dataset(&dataset);
         let layer_list = LayerList::new(&dataset);
         Self {
+            layer_info,
             layer_list,
-            dataset,
             exit: false,
         }
     }
@@ -47,38 +44,35 @@ impl App {
 
     // Layer list is a stateful widget -> &mut self
     fn render_list(&mut self, area: Rect, buf: &mut Buffer) {
-        let layer_list = LayerList::new(&self.dataset);
+        let layer_list = self.layer_list.clone();
         layer_list.render(area, buf, &mut self.layer_list.state);
     }
 
     fn render_srs(&self, area: Rect, buf: &mut Buffer) {
-        let srs = srs::Srs::new(
-            &self
-                .dataset
-                .layer(self.layer_list.state.selected().unwrap_or(0) as isize)
-                .unwrap(),
-        );
-        srs.render(area, buf)
+        if let Some(li) = self
+            .layer_info
+            .get(self.layer_list.state.selected().unwrap_or(0))
+        {
+            SrsUi::new(li.srs.clone()).render(area, buf);
+        }
     }
 
     fn render_extent(&self, area: Rect, buf: &mut Buffer) {
-        let extent = extent::Extent::new(
-            &self
-                .dataset
-                .layer(self.layer_list.state.selected().unwrap_or(0) as isize)
-                .unwrap(),
-        );
-        extent.render(area, buf)
+        if let Some(li) = self
+            .layer_info
+            .get(self.layer_list.state.selected().unwrap_or(0))
+        {
+            ExtentUi::new(li.extent.clone()).render(area, buf);
+        }
     }
 
     fn render_position_map(&self, area: Rect, buf: &mut Buffer) {
-        let position_map = position_map::PositionMap::new(
-            &self
-                .dataset
-                .layer(self.layer_list.state.selected().unwrap_or(0) as isize)
-                .unwrap(),
-        );
-        position_map.render(area, buf)
+        if let Some(li) = self
+            .layer_info
+            .get(self.layer_list.state.selected().unwrap_or(0))
+        {
+            PositionMapUi::new(li.position_map.clone()).render(area, buf);
+        }
     }
 
     fn handle_events(&mut self) -> io::Result<()> {
@@ -124,21 +118,6 @@ impl Widget for &mut App {
             ],
         )
         .split(main_layout[1]);
-
-        /* let map = Canvas::default()
-        .block(Block::bordered().title("Canvas".bold().yellow()))
-        .x_bounds([-180.0, 180.0])
-        .y_bounds([-90.0, 90.0])
-        .paint(|ctx| {
-            ctx.draw(&Map {
-                resolution: MapResolution::High,
-                color: Color::White,
-            });
-        })
-        .marker(Marker::Dot);
-
-        map.render(main_layout[2], buf);
-        */
 
         self.render_list(main_layout[0], buf);
         self.render_srs(inner_layout[0], buf);
