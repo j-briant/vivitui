@@ -1,4 +1,3 @@
-use gdal::Dataset;
 use ratatui::prelude::*;
 use ratatui::style::palette::tailwind;
 use ratatui::widgets::{block::*, *};
@@ -14,8 +13,7 @@ pub struct LayerList {
 }
 
 impl LayerList {
-    pub fn new(dataset: &Dataset) -> Self {
-        let layer_info: Vec<LayerInfo> = LayerInfo::from_dataset(dataset);
+    pub fn new(layer_info: Vec<LayerInfo>) -> Self {
         LayerList {
             items: layer_info,
             state: ListState::default().with_selected(Some(0)),

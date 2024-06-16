@@ -10,16 +10,14 @@ use vivitui::{data, extent::ExtentUi, layer_list, position_map::PositionMapUi, s
 #[derive(Debug)]
 pub struct App {
     layer_list: LayerList,
-    layer_info: Vec<LayerInfo>,
     exit: bool,
 }
 
 impl App {
     pub fn new(dataset: Dataset) -> Self {
         let layer_info = LayerInfo::from_dataset(&dataset);
-        let layer_list = LayerList::new(&dataset);
+        let layer_list = LayerList::new(layer_info);
         Self {
-            layer_info,
             layer_list,
             exit: false,
         }
@@ -50,7 +48,8 @@ impl App {
 
     fn render_srs(&self, area: Rect, buf: &mut Buffer) {
         if let Some(li) = self
-            .layer_info
+            .layer_list
+            .items
             .get(self.layer_list.state.selected().unwrap_or(0))
         {
             SrsUi::new(li.srs.clone()).render(area, buf);
@@ -59,7 +58,8 @@ impl App {
 
     fn render_extent(&self, area: Rect, buf: &mut Buffer) {
         if let Some(li) = self
-            .layer_info
+            .layer_list
+            .items
             .get(self.layer_list.state.selected().unwrap_or(0))
         {
             ExtentUi::new(li.extent.clone()).render(area, buf);
@@ -68,7 +68,8 @@ impl App {
 
     fn render_position_map(&self, area: Rect, buf: &mut Buffer) {
         if let Some(li) = self
-            .layer_info
+            .layer_list
+            .items
             .get(self.layer_list.state.selected().unwrap_or(0))
         {
             PositionMapUi::new(li.position_map.clone()).render(area, buf);
